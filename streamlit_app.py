@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # URL de tu servicio en AWS (API Gateway, ALB, etc.)
-AWS_CHAT_URL = "https://tu-api.execute-api.us-east-1.amazonaws.com/prod/chat"
+AWS_CHAT_URL = "https://d62dyx3bi7.execute-api.us-east-1.amazonaws.com/default/funcChatQA"
 
 st.set_page_config(page_title="Chat AWS", page_icon="🤖")
 st.title("🤖 Chatbot con backend en AWS")
