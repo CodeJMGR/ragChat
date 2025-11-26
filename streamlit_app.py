@@ -2,7 +2,6 @@ import streamlit as st
 import requests
 import json
 
-# Endpoint AWS
 AWS_CHAT_URL = "https://d62dyx3bi7.execute-api.us-east-1.amazonaws.com/default/funcChatQA"
 
 st.set_page_config(page_title="Chat QA Marítimo", page_icon="⚓")
@@ -36,7 +35,7 @@ if prompt:
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # 2. Crear payload EXACTO que espera tu Lambda
+    # 2. Crear payload EXACTO que espera el backend
     payload = {
         "question": prompt,
         "ground_truth": ""
@@ -51,33 +50,22 @@ if prompt:
             headers=headers,
             timeout=60
         )
-
-        # Lanza error si el código no es 200
         response.raise_for_status()
 
-        # Tu Lambda devuelve algo como:
-        # {
-        #   "statusCode": 200,
-        #   "body": "{\"question\": ..., \"answer\": ..., ...}"
-        # }
-        outer_json = response.json()
+        # ✔️ Tu backend retorna JSON directo (NO tiene body)
+        data = response.json()
 
-        # Body viene como STRING → convertirlo a JSON
-        body_raw = outer_json.get("body", "{}")
-        body = json.loads(body_raw)
+        # ✔️ Extraer el campo correcto
+        bot_reply = data.get("answer", "No se encontró 'answer' en la respuesta.")
 
-        # Extraemos la respuesta de RAG
-        bot_reply = body.get("answer", "No se recibió 'answer' desde el backend.")
-
-        # (Opcional) Mostrar detalles completos en un expander
+        # (Opcional) Mostrar detalles crudos
         with st.expander("Ver JSON completo devuelto por AWS"):
-            st.json(outer_json)
-            st.json(body)
+            st.json(data)
 
     except Exception as e:
         bot_reply = f"❌ Error al llamar al servicio de AWS: {e}"
 
-    # 3. Mostrar respuesta del chatbot
+    # 3. Respuesta del bot
     with st.chat_message("assistant"):
         st.markdown(bot_reply)
 
