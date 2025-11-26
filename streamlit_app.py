@@ -1,68 +1,87 @@
 import streamlit as st
 import requests
+import json
 
-# URL de tu servicio en AWS (API Gateway, ALB, etc.)
+# Endpoint AWS
 AWS_CHAT_URL = "https://d62dyx3bi7.execute-api.us-east-1.amazonaws.com/default/funcChatQA"
 
-st.set_page_config(page_title="Chat AWS", page_icon="🤖")
-st.title("🤖 Chatbot con backend en AWS")
+st.set_page_config(page_title="Chat QA Marítimo", page_icon="⚓")
+st.title("⚓ Chatbot Jurídico Costero (AWS RAG)")
 
-# Inicializar historial de mensajes en la sesión
+
+# --------------------------
+# Inicializar historial
+# --------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Mostrar historial de conversación
+
+# --------------------------
+# Mostrar historial
+# --------------------------
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# Entrada del usuario
-prompt = st.chat_input("Escribe tu pregunta...")
+
+# --------------------------
+# Input del usuario
+# --------------------------
+prompt = st.chat_input("Escribe tu pregunta jurídica sobre normativa marítima...")
 
 if prompt:
-    # 1. Agregar mensaje del usuario al historial
+
+    # 1. Mostrar mensaje del usuario
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # 2. Llamar a tu servicio en AWS
-    try:
-        # Ajusta el payload a lo que reciba tu API
-        payload = {
-            "message": prompt,
-            "history": [
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages
-                if m["role"] in ("user", "assistant")
-            ]
-        }
+    # 2. Crear payload EXACTO que espera tu Lambda
+    payload = {
+        "question": prompt,
+        "ground_truth": ""
+    }
 
-        # Si tu API necesita headers (API Key, JWT, etc.), agrégalos aquí
-        headers = {
-            # "x-api-key": "TU_API_KEY",
-            "Content-Type": "application/json"
-        }
+    try:
+        headers = {"Content-Type": "application/json"}
 
         response = requests.post(
             AWS_CHAT_URL,
             json=payload,
             headers=headers,
-            timeout=30
+            timeout=60
         )
-        response.raise_for_status()
-        data = response.json()
 
-        # Supongamos que tu API responde algo como:
-        # { "reply": "texto de la respuesta del modelo" }
-        bot_reply = data.get("reply", "No se recibió respuesta del backend.")
+        # Lanza error si el código no es 200
+        response.raise_for_status()
+
+        # Tu Lambda devuelve algo como:
+        # {
+        #   "statusCode": 200,
+        #   "body": "{\"question\": ..., \"answer\": ..., ...}"
+        # }
+        outer_json = response.json()
+
+        # Body viene como STRING → convertirlo a JSON
+        body_raw = outer_json.get("body", "{}")
+        body = json.loads(body_raw)
+
+        # Extraemos la respuesta de RAG
+        bot_reply = body.get("answer", "No se recibió 'answer' desde el backend.")
+
+        # (Opcional) Mostrar detalles completos en un expander
+        with st.expander("Ver JSON completo devuelto por AWS"):
+            st.json(outer_json)
+            st.json(body)
 
     except Exception as e:
-        bot_reply = f"Error al llamar al servicio de AWS: {e}"
+        bot_reply = f"❌ Error al llamar al servicio de AWS: {e}"
 
-    # 3. Mostrar respuesta del bot y guardarla
+    # 3. Mostrar respuesta del chatbot
     with st.chat_message("assistant"):
         st.markdown(bot_reply)
 
+    # Guardar en historial
     st.session_state.messages.append(
         {"role": "assistant", "content": bot_reply}
     )
