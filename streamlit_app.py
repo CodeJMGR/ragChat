@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 import json
 
-AWS_CHAT_URL = "https://d62dyx3bi7.execute-api.us-east-1.amazonaws.com/default/funcChatQA"
+AWS_CHAT_URL = "https://odmnxemt26.execute-api.us-east-1.amazonaws.com/default/rag-lambda-fn"
 
 st.set_page_config(page_title="Chat QA Marítimo", page_icon="⚓")
 st.title("⚓ Chatbot Jurídico Costero (AWS RAG)")
