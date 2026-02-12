@@ -5,7 +5,7 @@ import json
 AWS_CHAT_URL = "https://odmnxemt26.execute-api.us-east-1.amazonaws.com/default/rag-lambda-fn"
 
 st.set_page_config(page_title="Chat QA Marítimo", page_icon="⚓")
-st.title("⚓ Chatbot Jurídico Costero y Playas")
+st.title("⚓ Chatbot sobre Playas (Decreto-2324, REMAC 5-DIMAR)")
 
 
 # --------------------------
